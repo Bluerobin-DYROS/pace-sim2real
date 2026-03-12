@@ -114,8 +114,12 @@ class CMAESOptimizer:
         articulation.data.default_joint_armature[:, joint_ids] = self.sim_params[:, self.armature_idx]
         articulation.write_joint_viscous_friction_coefficient_to_sim(self.sim_params[:, self.damping_idx], joint_ids=joint_ids, env_ids=env_ids)
         articulation.data.default_joint_viscous_friction_coeff[:, joint_ids] = self.sim_params[:, self.damping_idx]
+        # If we set static friction lower than dynamic friction, the sim complains. So we need to do this weird order.
+        articulation.write_joint_dynamic_friction_coefficient_to_sim(0.0, joint_ids=joint_ids, env_ids=env_ids)
         articulation.write_joint_friction_coefficient_to_sim(self.sim_params[:, self.friction_idx], joint_ids=joint_ids, env_ids=env_ids)
         articulation.data.default_joint_friction_coeff[:, joint_ids] = self.sim_params[:, self.friction_idx]
+        articulation.write_joint_dynamic_friction_coefficient_to_sim(self.sim_params[:, self.friction_idx], joint_ids=joint_ids, env_ids=env_ids)
+        articulation.data.default_joint_dynamic_friction_coeff[:, joint_ids] = self.sim_params[:, self.friction_idx]
         articulation.write_joint_position_to_sim(initial_position + self.sim_params[:, self.bias_idx], joint_ids=joint_ids)
         articulation.write_joint_velocity_to_sim(torch.zeros_like(initial_position), joint_ids=joint_ids)
         for drive_type in articulation.actuators.keys():
@@ -136,8 +140,8 @@ class CMAESOptimizer:
         print("Max score: ", max_score.item())
         print("Min score: ", min_score.item(), " at index: ", min_index.item())
         print("Armature: ", self.sim_params[min_index, self.armature_idx].tolist())
-        print("Damping: ", self.sim_params[min_index, self.damping_idx].tolist())
-        print("Friction: ", self.sim_params[min_index, self.friction_idx].tolist())
+        print("Viscous Friction: ", self.sim_params[min_index, self.damping_idx].tolist())
+        print("Static/Dynamic Friction: ", self.sim_params[min_index, self.friction_idx].tolist())
         print("Bias: ", self.sim_params[min_index, self.bias_idx].tolist())
         print("Delay: ", self.sim_params[min_index, self.delay_idx].tolist())
         print(f"Elapsed time: {(datetime.now() - self._timer_start).total_seconds():.1f} seconds")
@@ -158,13 +162,13 @@ class CMAESOptimizer:
         max_score, _ = torch.max(self.scores, dim=0)
         for i in range(len(self.joint_order)):
             self.writer.add_histogram("4_Bias/distribution_" + self.joint_order[i], self.sim_params[:, self.bias_idx][:, i], self.iteration_counter)
-            self.writer.add_histogram("3_Friction/distribution_" + self.joint_order[i], self.sim_params[:, self.friction_idx][:, i], self.iteration_counter)
-            self.writer.add_histogram("2_Damping/distribution_" + self.joint_order[i], self.sim_params[:, self.damping_idx][:, i], self.iteration_counter)
+            self.writer.add_histogram("3_Static_Dynamic_Friction/distribution_" + self.joint_order[i], self.sim_params[:, self.friction_idx][:, i], self.iteration_counter)
+            self.writer.add_histogram("2_Viscous_Friction/distribution_" + self.joint_order[i], self.sim_params[:, self.damping_idx][:, i], self.iteration_counter)
             self.writer.add_histogram("1_Armature/distribution_" + self.joint_order[i], self.sim_params[:, self.armature_idx][:, i], self.iteration_counter)
 
             self.writer.add_scalar("4_Bias/best_" + self.joint_order[i], self.sim_params[min_score_index, self.bias_idx][i].item(), self.iteration_counter)
-            self.writer.add_scalar("3_Friction/best_" + self.joint_order[i], self.sim_params[min_score_index, self.friction_idx][i].item(), self.iteration_counter)
-            self.writer.add_scalar("2_Damping/best_" + self.joint_order[i], self.sim_params[min_score_index, self.damping_idx][i].item(), self.iteration_counter)
+            self.writer.add_scalar("3_Static_Dynamic_Friction/best_" + self.joint_order[i], self.sim_params[min_score_index, self.friction_idx][i].item(), self.iteration_counter)
+            self.writer.add_scalar("2_Viscous_Friction/best_" + self.joint_order[i], self.sim_params[min_score_index, self.damping_idx][i].item(), self.iteration_counter)
             self.writer.add_scalar("1_Armature/best_" + self.joint_order[i], self.sim_params[min_score_index, self.armature_idx][i].item(), self.iteration_counter)
         self.writer.add_histogram("0_Delay/distribution", self.sim_params[:, self.delay_idx], self.iteration_counter)
         self.writer.add_scalar("0_Delay/best", self.sim_params[min_score_index, self.delay_idx].item(), self.iteration_counter)
