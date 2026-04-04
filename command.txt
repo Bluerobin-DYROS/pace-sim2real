@@ -1,0 +1,40 @@
+[fit]
+cd ~/pace-sim2real
+python scripts/pace/fit.py --headless --num_envs=4096 --task=Isaac-Pace-P73-Walker-v0
+
+[log]
+pace-sim2real/logs/pace/p73_walker
+
+Key files include:
+
+    config.pt: full configuration and dataset metadata
+    best_trajectory.pt: best simulated joint trajectory
+    mean_xxx.pt: mean parameter estimates per iteration
+    
+[plot]
+python scripts/pace/plot_trajectory.py --plot_trajectory --robot_name=p73_walker
+
+[best param]
+
+Best parameter set: tensor([ 9.6000e-01,  3.7500e-01,  6.2500e-02,  3.5630e-01,  1.2886e-01,
+         1.2883e-01,  9.6000e-01,  3.7500e-01,  6.2500e-02,  3.5630e-01,
+         1.2886e-01,  1.2883e-01,  1.6000e-01,  6.9901e+00,  6.9951e+00,
+         1.7339e+00,  6.8993e+00,  3.1745e+00,  6.9974e+00,  2.6404e+00,
+         6.9879e+00,  4.5515e+00,  6.9904e+00,  6.2856e+00,  6.9987e+00,
+         6.5851e+00,  1.7349e-01,  6.9898e+00,  2.7360e+00,  2.5399e+00,
+         2.0902e+00,  6.2475e+00,  1.9378e+00,  4.6317e+00,  6.2773e-03,
+         1.6559e+00,  1.0097e+00,  6.3659e+00,  9.8205e-01,  9.9996e-02,
+         8.4375e-03, -8.3337e-02, -9.9986e-02,  9.9983e-02,  9.0195e-02,
+         9.9971e-02, -7.1659e-02, -9.4350e-02,  9.9981e-02, -9.9966e-02,
+        -7.4191e-02, -1.0553e-02,  5.5976e-01], device='cuda:0')
+Armature params: tensor([0.9600, 0.3750, 0.0625, 0.3563, 0.1289, 0.1288, 0.9600, 0.3750, 0.0625,
+        0.3563, 0.1289, 0.1288, 0.1600], device='cuda:0')
+Viscous friction params: tensor([6.9901, 6.9951, 1.7339, 6.8993, 3.1745, 6.9974, 2.6404, 6.9879, 4.5515,
+        6.9904, 6.2856, 6.9987, 6.5851], device='cuda:0')
+Static/dynamic friction params: tensor([1.7349e-01, 6.9898e+00, 2.7360e+00, 2.5399e+00, 2.0902e+00, 6.2475e+00,
+        1.9378e+00, 4.6317e+00, 6.2773e-03, 1.6559e+00, 1.0097e+00, 6.3659e+00,
+        9.8205e-01], device='cuda:0')
+Encoder bias params: tensor([ 0.1000,  0.0084, -0.0833, -0.1000,  0.1000,  0.0902,  0.1000, -0.0717,
+        -0.0944,  0.1000, -0.1000, -0.0742, -0.0106], device='cuda:0')
+Delay param: 0.5597624182701111
+Plotting complete.

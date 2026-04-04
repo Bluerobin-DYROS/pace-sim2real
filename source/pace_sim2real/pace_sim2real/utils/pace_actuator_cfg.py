@@ -19,4 +19,4 @@ class PaceDCMotorCfg(DCMotorCfg):
     """
     class_type: type = pace_actuator.PaceDCMotor
     encoder_bias: dict[str, float] | float | None = 0.0
-    max_delay: torch.int | None = 0
+    max_delay: int | None = 0

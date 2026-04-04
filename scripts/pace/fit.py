@@ -67,6 +67,7 @@ def main():
 
     time_steps = time_data.shape[0]
     sim_dt = env.unwrapped.sim.cfg.dt
+    total_time_s = float(time_data[-1].item())
 
     opt = CMAESOptimizer(
         bounds=bounds_params,
@@ -98,7 +99,7 @@ def main():
             env.step(actions)
             counter += 1
             if counter % 400 == 0:
-                print(f"[INFO]: Step {counter * sim_dt:.1f} / {time_data[-1]:.1f} seconds ({counter / time_steps * 100:.1f} %)")
+                print(f"[INFO]: Step {counter * sim_dt:.1f} / {total_time_s:.1f} seconds ({counter / time_steps * 100:.1f} %)")
             if counter >= time_steps:
                 print("[INFO]: Reached the end of the trajectory, exiting.")
                 counter = 0
