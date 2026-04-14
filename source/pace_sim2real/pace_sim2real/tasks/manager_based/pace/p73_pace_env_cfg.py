@@ -76,7 +76,7 @@ class P73PaceSceneCfg(PaceSim2realSceneCfg):
     robot: ArticulationCfg = P73_CFG.replace(
         prim_path="{ENV_REGEX_NS}/Robot",
         init_state=ArticulationCfg.InitialStateCfg(
-            pos=(0.0, 0.0, 0.895),
+            pos=(0.0, 0.0, 2.0),
         ),
     )
 

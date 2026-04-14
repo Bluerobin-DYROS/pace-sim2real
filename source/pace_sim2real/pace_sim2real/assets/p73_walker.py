@@ -44,7 +44,7 @@ init = {
 P73_CFG = ArticulationCfg(
     spawn=sim_utils.UrdfFileCfg(
         asset_path=f"{P73_ASSETS_DATA_DIR}/p73_walker_description/urdf/p73_walker.urdf",
-        fix_base=False,
+        fix_base=True,
         merge_fixed_joints=False,
         joint_drive=sim_utils.UrdfConverterCfg.JointDriveCfg(
             gains=sim_utils.UrdfConverterCfg.JointDriveCfg.PDGainsCfg(stiffness=None, damping=None)
@@ -60,7 +60,7 @@ P73_CFG = ArticulationCfg(
             max_depenetration_velocity=1.0,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            enabled_self_collisions=True,
+            enabled_self_collisions=False,
             solver_position_iteration_count=8,
             solver_velocity_iteration_count=4,
         ),
@@ -69,7 +69,7 @@ P73_CFG = ArticulationCfg(
         pos=(0.0, 0.0, 0.895),
         joint_pos=init,
     ),
-    soft_joint_pos_limit_factor=1.0,
+    soft_joint_pos_limit_factor=100.0,
     actuators={
         "walker_motors": PaceDCMotorCfg(
             joint_names_expr=[
