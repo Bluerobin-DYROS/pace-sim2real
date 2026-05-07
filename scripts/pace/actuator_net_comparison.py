@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description="Actuator-net vs PD comparison for 
 parser.add_argument("--num_envs", type=int, default=1)
 parser.add_argument("--task", type=str, default="Isaac-Pace-P73-Walker-v0")
 parser.add_argument("--actuator_net_dir", type=str,
-                    default="/home/bru24-server/IsaacSim/pace-sim2real/data/p73_lstm_",
+                    default="/home/user/pace-sim2real/data/p73_lstm_",
                     help="Directory containing per-joint .pt files")
 parser.add_argument("--min_frequency", type=float, default=0.1)
 parser.add_argument("--max_frequency", type=float, default=0.5)
@@ -81,7 +81,7 @@ INIT_POS = torch.tensor([
 ])
 
 
-# ── Isaac Lab ActuatorNetLSTM wrapper (per-joint, stateless) ──────────────────
+# ── Isaac Lab ActuatorNetLSTM wrapper (per-joint) ──────────────────
 
 class PerJointActuatorNetLSTM:
     def __init__(self, net_dir: str, num_envs: int, device: str, torque_scale: float):
@@ -123,10 +123,10 @@ class PerJointActuatorNetLSTM:
         print(f"[INFO]: Loaded {len(self.actuators)} Isaac Lab ActuatorNetLSTM instances")
 
     def reset_all(self):
-        """Reset hidden/cell states for all joints and all envs."""
-        env_ids = list(range(self.num_envs))
-        for act in self.actuators:
-            act.reset(env_ids)
+        with torch.no_grad():
+            for act in self.actuators:
+                act.sea_hidden_state.zero_()
+                act.sea_cell_state.zero_()
 
     @torch.no_grad()
     def compute_torques(
@@ -135,9 +135,8 @@ class PerJointActuatorNetLSTM:
         joint_pos: torch.Tensor,     # (num_envs, 12) current joint positions
         joint_vel: torch.Tensor,     # (num_envs, 12) current joint velocities
     ) -> torch.Tensor:
-        # Reset hidden state every step → stateless inference
-        self.reset_all()
-
+        # Stateful: (h, c) accumulate across the whole trajectory.
+        # Reset is done ONCE before the main loop, not per-step.
         torques = torch.zeros(self.num_envs, self.num_joints, device=self.device)
 
         for j, act in enumerate(self.actuators):
@@ -279,6 +278,9 @@ def main():
     vel_buf            = torch.zeros((num_steps, 12), device=device)
     actual_torque_buf  = torch.zeros((num_steps, 12), device=device)
 
+    # Zero (h, c) once before rollout; states then evolve statefully.
+    per_joint_net.reset_all()
+
     # ── simulation loop ───────────────────────────────────────────────────────
     for step in range(num_steps):
         if not simulation_app.is_running():
@@ -296,7 +298,6 @@ def main():
             # PD torque (analytical)
             pd_tau = kp * err_leg - kd * dq_leg
 
-            # Actuator net torque via Isaac Lab ActuatorNetLSTM (stateless)
             # Need (num_envs, 12) shape
             tgt_batch = tgt_leg.unsqueeze(0).expand(args_cli.num_envs, -1)
             pos_batch = (q_leg - leg_bias).unsqueeze(0).expand(args_cli.num_envs, -1)
@@ -370,7 +371,7 @@ def main():
         ax.grid(True, alpha=0.3)
     axes[-2].set_xlabel("Time [s]", fontsize=8)
     axes[-1].set_xlabel("Time [s]", fontsize=8)
-    fig.suptitle("PD torque vs Isaac Lab ActuatorNetLSTM (per-joint, stateless) — P73 chirp", fontsize=12)
+    fig.suptitle("PD torque vs Isaac Lab ActuatorNetLSTM (per-joint) — P73 chirp", fontsize=12)
     plt.tight_layout()
     plt.savefig(out_dir / "torque_comparison_isaaclab.png", dpi=120)
     plt.close()
