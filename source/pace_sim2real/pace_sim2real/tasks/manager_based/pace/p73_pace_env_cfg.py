@@ -57,17 +57,17 @@ class P73PaceCfg(PaceCfg):
         self.bounds_params[:DOF_DIM, 1] = self.armature_fixed
 
         # dof damping
-        self.bounds_params[DOF_DIM:2*DOF_DIM, 1] = 15.0  # dof_damping between 0.0 - 15.0 [Nm s/rad]
+        self.bounds_params[DOF_DIM:2*DOF_DIM, 1] = 10.0  # dof_damping between 0.0 - 10.0 [Nm s/rad]
         
         # dof friction
-        self.bounds_params[2*DOF_DIM:3*DOF_DIM, 1] = 15.0  # friction between 0.0 - 15.0 [Nm]
+        self.bounds_params[2*DOF_DIM:3*DOF_DIM, 1] = 10.0  # friction between 0.0 - 10.0 [Nm]
         
         # dof bias
-        self.bounds_params[3*DOF_DIM:4*DOF_DIM, 0] = -0.1
-        self.bounds_params[3*DOF_DIM:4*DOF_DIM, 1] = 0.1  # bias between -0.1 - 0.1 [rad]
+        self.bounds_params[3*DOF_DIM:4*DOF_DIM, 0] = 0.0
+        self.bounds_params[3*DOF_DIM:4*DOF_DIM, 1] = 0.0  # bias between -0.1 - 0.1 [rad]
         
         # dof delay
-        self.bounds_params[4*DOF_DIM, 1] = 10.0  # delay between 0.0 - 10.0 [sim steps]
+        self.bounds_params[4*DOF_DIM, 1] = 0.0  # delay between 0.0 - 10.0 [sim steps]
 
 
 @configclass

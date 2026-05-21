@@ -1,10 +1,34 @@
 import isaaclab.sim as sim_utils
 from isaaclab.assets.articulation import ArticulationCfg
-from pace_sim2real.utils import PaceDCMotorCfg
+from pace_sim2real.utils import PaceActuatorNetLSTMCfg, PaceDCMotorCfg, project_root
 
 import os
 
 P73_ASSETS_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+P73_LSTM_DIR = str(project_root() / "data" / "p73_lstm_")
+
+LEG_JOINT_NAMES = [
+    "L_HipRoll_Joint",
+    "L_HipPitch_Joint",
+    "L_HipYaw_Joint",
+    "L_Knee_Joint",
+    "L_AnklePitch_Joint",
+    "L_AnkleRoll_Joint",
+    "R_HipRoll_Joint",
+    "R_HipPitch_Joint",
+    "R_HipYaw_Joint",
+    "R_Knee_Joint",
+    "R_AnklePitch_Joint",
+    "R_AnkleRoll_Joint",
+]
+
+# File-name tokens for each leg joint's per-joint LSTM .pt (paired with LEG_JOINT_NAMES).
+LEG_NET_JOINT_NAMES = [
+    "left_hip_roll", "left_hip_pitch", "left_hip_yaw",
+    "left_knee_pitch", "left_ankle_pitch", "left_ankle_roll",
+    "right_hip_roll", "right_hip_pitch", "right_hip_yaw",
+    "right_knee_pitch", "right_ankle_pitch", "right_ankle_roll",
+]
 
 init = {
     # "L_HipRoll_Joint": 0.0,
@@ -71,23 +95,12 @@ P73_CFG = ArticulationCfg(
     ),
     soft_joint_pos_limit_factor=100.0,
     actuators={
-        "walker_motors": PaceDCMotorCfg(
-            joint_names_expr=[
-                "L_HipRoll_Joint",
-                "L_HipPitch_Joint",
-                "L_HipYaw_Joint",
-                "L_Knee_Joint",
-                "L_AnklePitch_Joint",
-                "L_AnkleRoll_Joint",
-                "R_HipRoll_Joint",
-                "R_HipPitch_Joint",
-                "R_HipYaw_Joint",
-                "R_Knee_Joint",
-                "R_AnklePitch_Joint",
-                "R_AnkleRoll_Joint",
-                "WaistYaw_Joint",
-            ],
-            saturation_effort=352.0,
+        "leg_motors": PaceActuatorNetLSTMCfg(
+            joint_names_expr=LEG_JOINT_NAMES,
+            net_joint_names=LEG_NET_JOINT_NAMES,
+            network_dir=P73_LSTM_DIR,
+            network_prefix="p73_lstm_",
+            torque_scale=100.0,
             effort_limit={
                 ".*_HipRoll_Joint": 352.0,
                 ".*_HipPitch_Joint": 220.0,
@@ -95,7 +108,6 @@ P73_CFG = ArticulationCfg(
                 ".*_Knee_Joint": 220.0,
                 ".*_AnklePitch_Joint": 95.0,
                 ".*_AnkleRoll_Joint": 95.0,
-                "WaistYaw_Joint": 152.0,
             },
             velocity_limit={
                 ".*_HipRoll_Joint": 4.86,
@@ -104,59 +116,19 @@ P73_CFG = ArticulationCfg(
                 ".*_Knee_Joint": 7.78,
                 ".*_AnklePitch_Joint": 11.81,
                 ".*_AnkleRoll_Joint": 11.81,
-                "WaistYaw_Joint": 4.03,
-            },
-            stiffness={
-                        ".*_HipRoll_Joint": 1536.0,
-                        ".*_HipPitch_Joint": 937.5,
-                        ".*_HipYaw_Joint": 625.0,
-                        ".*_Knee_Joint": 747.552,
-                        ".*_AnklePitch_Joint": 490.644,
-                        ".*_AnkleRoll_Joint": 490.104,
-                        "WaistYaw_Joint": 576.0,
-            },
-            damping={
-                        ".*_HipRoll_Joint": 76.8,
-                        ".*_HipPitch_Joint": 37.5,
-                        ".*_HipYaw_Joint": 12.5,
-                        ".*_Knee_Joint": 37.378,
-                        ".*_AnklePitch_Joint": 16.355,
-                        ".*_AnkleRoll_Joint": 5.337,
-                        "WaistYaw_Joint": 19.2,
-
             },
             encoder_bias={".*": 0.0},
             max_delay=10,
-            # viscous_friction={
-            #     ".*_HipRoll_Joint": 2.5,
-            #     ".*_HipPitch_Joint": 2.5,
-            #     ".*_HipYaw_Joint": 1.0,
-            #     ".*_Knee_Joint": 2.0,
-            #     ".*_AnklePitch_Joint": 1.0,
-            #     ".*_AnkleRoll_Joint": 1.0,
-            # },
-            # friction={
-            #     ".*_HipRoll_Joint": 5.0,
-            #     ".*_HipPitch_Joint": 5.0,
-            #     ".*_HipYaw_Joint": 2.0,
-            #     ".*_Knee_Joint": 3.0,
-            #     ".*_AnklePitch_Joint": 2.0,
-            #     ".*_AnkleRoll_Joint": 2.0,
-            # },
-            # armature={
-            #     "L_HipRoll_Joint": 0.96,
-            #     "L_HipPitch_Joint": 0.375,
-            #     "L_HipYaw_Joint": 0.0625,
-            #     "L_Knee_Joint": 0.35630,
-            #     "L_AnklePitch_Joint": 0.12886,
-            #     "L_AnkleRoll_Joint": 0.12883,
-            #     "R_HipRoll_Joint": 0.96,
-            #     "R_HipPitch_Joint": 0.375,
-            #     "R_HipYaw_Joint": 0.0625,
-            #     "R_Knee_Joint": 0.35630,
-            #     "R_AnklePitch_Joint": 0.12886,
-            #     "R_AnkleRoll_Joint": 0.12883,
-            # },
+        ),
+        "waist_motor": PaceDCMotorCfg(
+            joint_names_expr=["WaistYaw_Joint"],
+            saturation_effort=152.0,
+            effort_limit={"WaistYaw_Joint": 152.0},
+            velocity_limit={"WaistYaw_Joint": 4.03},
+            stiffness={"WaistYaw_Joint": 576.0},
+            damping={"WaistYaw_Joint": 19.2},
+            encoder_bias={"WaistYaw_Joint": 0.0},
+            max_delay=10,
         ),
     },
 )
